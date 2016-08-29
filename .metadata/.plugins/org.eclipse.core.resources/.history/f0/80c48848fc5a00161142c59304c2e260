@@ -1,0 +1,9 @@
+#server port
+server.port=8081
+#server context path
+server.contextPath=/pay-channel-ccb
+#spring profiles
+spring.profiles.active=${env.name:dev}
+# server settings
+path.prefix=${path.prefix}
+

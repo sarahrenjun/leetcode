@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<section name="MavenProjectWizardArtifactPage">
+		<list key="groupId">
+		</list>
+		<list key="name">
+		</list>
+		<list key="artifactId">
+		</list>
+		<list key="projectNameTemplate">
+			<item value="[artifactId]"/>
+			<item value="[artifactId]-TRUNK"/>
+			<item value="[artifactId]-[version]"/>
+			<item value="[groupId].[artifactId]"/>
+			<item value="[groupId].[artifactId]-[version]"/>
+		</list>
+		<list key="version">
+			<item value="0.0.1-SNAPSHOT"/>
+		</list>
+	</section>
+	<section name="org.eclipse.m2e.core.pom.dependencies">
+	</section>
+	<section name="org.eclipse.m2e.core.pom.overview">
+		<list key="ciManagementUrl">
+		</list>
+		<list key="ciManagementSystem">
+		</list>
+		<list key="issueManagementSystem">
+		</list>
+		<list key="issueManagementUrl">
+		</list>
+	</section>
+	<section name="MavenProjectImportWizardPage">
+		<list key="rootDirectory">
+			<item value="C:\Users\Administrator\git\pay-channel-ccb"/>
+			<item value="C:\Users\Administrator\git\pay-common-channel"/>
+			<item value="C:\Users\Administrator\git\pay-channel-bocomcredit"/>
+			<item value="C:\Users\Administrator\git\pay-channel"/>
+			<item value="C:\Users\Administrator\git\spring_mvc_download"/>
+			<item value="C:\Users\Administrator\git\pay-channel-spdbcredit"/>
+			<item value="C:\Users\Administrator\git\autoScore"/>
+		</list>
+		<list key="projectNameTemplate">
+			<item value="[artifactId]"/>
+			<item value="[artifactId]-TRUNK"/>
+			<item value="[artifactId]-[version]"/>
+			<item value="[groupId].[artifactId]"/>
+			<item value="[groupId].[artifactId]-[version]"/>
+		</list>
+	</section>
+	<section name="MavenProjectWizardArchetypePage">
+		<item value="All Catalogs" key="catalog"/>
+		<list key="projectNameTemplate">
+			<item value="[artifactId]"/>
+			<item value="[artifactId]-TRUNK"/>
+			<item value="[artifactId]-[version]"/>
+			<item value="[groupId].[artifactId]"/>
+			<item value="[groupId].[artifactId]-[version]"/>
+		</list>
+	</section>
+	<section name="MavenProjectWizardLocationPage">
+		<list key="location">
+			<item value="D:\workspace\pay-ccb"/>
+			<item value="D:\workspace"/>
+			<item value="D:\workspace\test"/>
+		</list>
+		<list key="projectNameTemplate">
+			<item value="[artifactId]"/>
+			<item value="[artifactId]-TRUNK"/>
+			<item value="[artifactId]-[version]"/>
+			<item value="[groupId].[artifactId]"/>
+			<item value="[groupId].[artifactId]-[version]"/>
+		</list>
+	</section>
+	<section name="Maven2ProjectWizardArchifactPage">
+		<list key="package">
+			<item value="com.ren.spring.boot.test"/>
+			<item value="com.learn.cm.velority"/>
+			<item value="com.learn.cm.webmvct"/>
+			<item value="pay_ccb"/>
+			<item value="pay_ccb.aaa"/>
+			<item value="pay_ccb.pay_ccb"/>
+			<item value="springmvc.aaa"/>
+			<item value="springmvc.springmvc"/>
+		</list>
+		<list key="groupId">
+			<item value="com.ren"/>
+			<item value="com.learn.cm"/>
+			<item value="pay-ccb"/>
+			<item value="springmvc"/>
+		</list>
+		<list key="artifactId">
+			<item value="spring.boot.test"/>
+			<item value="velority"/>
+			<item value="webmvct"/>
+			<item value="aaa"/>
+			<item value="pay-ccb"/>
+			<item value="springmvc"/>
+		</list>
+		<list key="projectNameTemplate">
+			<item value="[artifactId]"/>
+			<item value="[artifactId]-TRUNK"/>
+			<item value="[artifactId]-[version]"/>
+			<item value="[groupId].[artifactId]"/>
+			<item value="[groupId].[artifactId]-[version]"/>
+		</list>
+		<list key="version">
+			<item value="0.0.1-SNAPSHOT"/>
+		</list>
+	</section>
+</section>

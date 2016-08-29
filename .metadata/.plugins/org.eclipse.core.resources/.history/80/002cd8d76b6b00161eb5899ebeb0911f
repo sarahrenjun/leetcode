@@ -1,0 +1,82 @@
+package com.iqiyi.pay.channel.ccb.handle;
+
+import java.io.IOException;
+import java.util.Date;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.stereotype.Component;
+import org.xml.sax.SAXException;
+
+import com.iqiyi.pay.channel.ccb.constants.CcbResultCode;
+import com.iqiyi.pay.channel.ccb.constants.ConstantParam;
+import com.iqiyi.pay.channel.ccb.param.request.CcbRefundRequest;
+import com.iqiyi.pay.channel.ccb.param.response.CcbRefundResponse;
+import com.iqiyi.pay.channel.ccb.util.CcbUtil;
+import com.iqiyi.pay.channel.constants.ResultCode;
+import com.iqiyi.pay.channel.exception.PayException;
+import com.iqiyi.pay.channel.request.RefundRequest;
+import com.iqiyi.pay.channel.response.RefundResponse;
+import com.iqiyi.pay.channel.util.XmlObjectUtil;
+
+@Component
+public class CcbRefundHandle {
+	
+	private static final Logger logger = LoggerFactory
+			.getLogger(CcbRefundHandle.class);
+	
+	@Autowired
+	private Environment environment;
+	
+	/**
+	 * convert input param to ccb bind request param
+	 * @param param
+	 * @return
+	 */
+	public CcbRefundRequest convertToCcbRequest(RefundRequest param) {
+		CcbRefundRequest ccbRefundRequest = new CcbRefundRequest();
+		ccbRefundRequest.setCunt_no(environment.getProperty("ccb.counter.number"));
+		ccbRefundRequest.setShop_no(environment.getProperty("ccb.shop.number"));
+		ccbRefundRequest.setTx_flag("0");
+		ccbRefundRequest.setTxcode(ConstantParam.CCB_REFUND_TXCODE);
+		ccbRefundRequest.setAmount(param.getRefund_fee());
+		ccbRefundRequest.setOrder_no(param.getOrig_order_code());
+		ccbRefundRequest.setOri_date(param.getOrig_trans_time().substring(0, 8));
+		ccbRefundRequest.setTxdate(param.getTrans_time().substring(0, 8));
+		ccbRefundRequest.setTxtime(param.getTrans_time().substring(8));
+		ccbRefundRequest.setTxseq(CcbUtil.getSysTime());
+		return ccbRefundRequest;
+	}
+	
+	
+	
+	/**
+	 * convert response xml to object
+	 * @param xml
+	 * @return
+	 */
+	public RefundResponse convertXmltoObject(String xml) {
+		RefundResponse response = new RefundResponse();
+		try {
+			CcbRefundResponse crr = XmlObjectUtil.convertXmlToObjectDigester(xml, "UTF-8", "rules/RefundResponseDigester.xml");
+			logger.info("[ccb refund response object: {}]",crr);
+			if("SUCCESS".equals(crr.getStatus())) {
+				response.setCode(ResultCode.SUCCESS.getCode());
+				response.setMsg(ResultCode.SUCCESS.getMsg());
+				response.setOrig_order_code(crr.getOrder_no());
+				response.setRefund_fee(crr.getAmount());
+				response.setTrans_seq(crr.getBank_flow());
+			} else {
+				response.setCode(crr.getCode());
+				response.setMsg(crr.getDesc());
+			}
+			response.setTrans_seq(crr.getTxseq());
+		} catch (IOException | SAXException e) {
+			logger.info("[convert response xml to object error:[message:{},cause:{}]]",e.getMessage(),e.getCause());
+			throw new PayException(CcbResultCode.ERROR_OF_CONVERT.getCode(),CcbResultCode.ERROR_OF_CONVERT.getMsg());
+		}
+		return response; 
+	}
+}

@@ -1,0 +1,89 @@
+/**
+ * *****************************************************
+ * Copyright (C) 2016 iQIYI.COM - All Rights Reserved
+ * This file is part of iQiyi Pay project.
+ * Unauthorized copy of this file, via any medium is strictly prohibited.
+ * Proprietary and Confidential.
+ * ****************************************************
+ **/
+package com.iqiyi.pay.channel.ccb.handle;
+
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.stereotype.Component;
+import org.xml.sax.SAXException;
+
+import com.iqiyi.pay.channel.ccb.constants.CcbResultCode;
+import com.iqiyi.pay.channel.ccb.constants.ConstantParam;
+import com.iqiyi.pay.channel.ccb.param.request.CcbSendCodeRequest;
+import com.iqiyi.pay.channel.ccb.param.response.CcbSendCodeResponse;
+import com.iqiyi.pay.channel.ccb.util.CcbUtil;
+import com.iqiyi.pay.channel.constants.ResultCode;
+import com.iqiyi.pay.channel.exception.PayException;
+import com.iqiyi.pay.channel.request.SendCodeRequest;
+import com.iqiyi.pay.channel.response.SendCodeResponse;
+import com.iqiyi.pay.channel.util.XmlObjectUtil;
+/**
+ * 
+ * @author renshuangjun_sx on 2016/08/04
+ *
+ */
+
+@Component
+public class CcbSendCodeHandle {
+	
+	private static final Logger logger = LoggerFactory
+			.getLogger(CcbSendCodeHandle.class);
+	
+	@Autowired
+	private Environment environment;
+	
+	public CcbSendCodeRequest convertToCcbRequest(SendCodeRequest param) {
+		CcbSendCodeRequest ccbSendCodeRequest = new CcbSendCodeRequest();
+		ccbSendCodeRequest.setAcct_no(param.getCard_num());
+		ccbSendCodeRequest.setCert_id(param.getCert_num());
+		ccbSendCodeRequest.setCunt_no(environment.getProperty("ccb.counter.number"));
+		ccbSendCodeRequest.setCust_nm(param.getUser_name());
+		ccbSendCodeRequest.setMobile(param.getCard_mobile());
+		ccbSendCodeRequest.setShop_no(environment.getProperty("ccb.shop.number"));
+		ccbSendCodeRequest.setTx_flag("0");
+		ccbSendCodeRequest.setTxcode(ConstantParam.CCB_SENDCODE_TXCODE);
+		ccbSendCodeRequest.setTxdate(param.getTrans_time().substring(0, 8));
+		ccbSendCodeRequest.setTxtime(param.getTrans_time().substring(8)); 
+		ccbSendCodeRequest.setTxseq(CcbUtil.getSysTime());
+		return ccbSendCodeRequest;
+	}
+	
+	/**
+	 * convert response xml to object
+	 * @param xml
+	 * @return
+	 */
+	public SendCodeResponse convertXmltoObject(String xml) {
+		SendCodeResponse response = new SendCodeResponse();
+		try {
+			CcbSendCodeResponse cscr = XmlObjectUtil.convertXmlToObjectDigester(xml, "UTF-8", "rules/SendCodeResponseDigester.xml");
+			logger.info("[ccb send code response object:{}]",cscr);
+			if("SUCCESS".equals(cscr.getStatus())){
+				response.setCode(ResultCode.SUCCESS.getCode());
+				response.setMsg(ResultCode.SUCCESS.getMsg());
+			} else {
+				response.setCode(cscr.getCode());
+				response.setMsg(cscr.getDesc());
+			}
+			response.setTrans_seq(cscr.getTxseq());
+			response.setChannel_resp_code(cscr.getCode());
+			response.setChannel_resp_msg(cscr.getDesc());
+		} catch (IOException | SAXException e) {
+			logger.info("[convert response xml to object error:[message:{},cause:{}]]",e.getMessage(),e.getCause());
+			throw new PayException(CcbResultCode.ERROR_OF_CONVERT.getCode(),CcbResultCode.ERROR_OF_CONVERT.getMsg());
+		}
+		return response;
+	}
+}

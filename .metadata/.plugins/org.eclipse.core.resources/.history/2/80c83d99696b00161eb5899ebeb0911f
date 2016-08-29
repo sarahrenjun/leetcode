@@ -1,0 +1,80 @@
+package controller;
+
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.SpringApplicationConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.web.WebAppConfiguration;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.RequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
+
+import com.iqiyi.pay.channel.Application;
+import com.iqiyi.pay.channel.ccb.constants.ConstantParam;
+import com.iqiyi.pay.common.utils.JsonBinder;
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@SpringApplicationConfiguration(classes=Application.class)
+@WebAppConfiguration
+public class TestCcbBindController {
+	
+	private static final Logger logger = LoggerFactory
+			.getLogger(TestCcbBindController.class);
+	
+	@Autowired
+	private WebApplicationContext context;
+	
+	private MockMvc mock;
+	
+	@Before
+	public void setUp (){
+		this.mock = MockMvcBuilders.webAppContextSetup(this.context).build();
+	}
+
+	@Test
+	public void test() throws UnsupportedEncodingException, Exception {
+		RequestBuilder request;
+		request = MockMvcRequestBuilders.post("/bind")
+				.characterEncoding(ConstantParam.UTF_ENCODE)
+				.contentType("application/json")
+				.accept("*/*")
+				.content(getBindTestCase());
+		String response = mock.perform(request).andExpect(status().isOk())
+				.andReturn().getResponse().getContentAsString();
+		Map resultMap = JsonBinder.buildNonNullBinder().fromJson(response,HashMap.class);
+		logger.info("[unit test result][smsInterfaceTest test][result:{}]", response);
+        logger.info("[unit test result][smsInterfaceTest test][code:{}]", resultMap.get("code"));
+        logger.info("[unit test result][smsInterfaceTest test][msg:{}]",resultMap.get("msg"));
+        logger.info("[unit test result][smsInterfaceTest test][contract_id:{}]",resultMap.get("contract_id"));
+        logger.info("[unit test result][smsInterfaceTest test][trans_seq:{}]",resultMap.get("trans_seq"));
+	}
+	
+	private String getBindTestCase(){
+        return "{\n" +
+                "\t\"trans_seq\": \"1231231231\",\n" +
+                "\t\"trans_time\": \"20160803143622\",\n" +
+                "\t\"user_id\": \"123123123\",\n" +
+                "\t\"user_name\": \"陆九六\",\n" +
+                "\t\"card_num\": \"6214991240060672\",\n" +
+                "\t\"card_type\": \"credit\",\n" +
+                "\t\"card_validity\": \"3011\",\n" +
+                "\t\"card_cvv2\": \"1234\",\n" +
+                "\t\"card_mobile\": \"11990155191\",\n" +
+                "\t\"sms_code\": \"081516\",\n" +
+                "\t\"cert_num\": \"320671198912309528\"\n" +
+                "}";
+    }
+
+}

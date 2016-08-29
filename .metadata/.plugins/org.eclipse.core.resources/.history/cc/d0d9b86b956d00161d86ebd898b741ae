@@ -1,0 +1,66 @@
+/**
+ * *****************************************************
+ * Copyright (C) 2016 iQIYI.COM - All Rights Reserved
+ * This file is part of iQiyi Pay project.
+ * Unauthorized copy of this file, via any medium is strictly prohibited.
+ * Proprietary and Confidential.
+ * ****************************************************
+ */
+package com.iqiyi.pay.channel.ccb.controller;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.iqiyi.pay.channel.ccb.handle.CcbUnbindHandle;
+import com.iqiyi.pay.channel.ccb.handle.HandleMessage;
+import com.iqiyi.pay.channel.ccb.param.request.CcbUnbindRequest;
+import com.iqiyi.pay.channel.ccb.validator.CcbUnbindRequestValidator;
+import com.iqiyi.pay.channel.controller.UnbindController;
+import com.iqiyi.pay.channel.request.UnbindRequest;
+import com.iqiyi.pay.channel.response.BaseResponse;
+
+/**
+ * 
+ * @author renshuangjun_sx on 2016/08/01
+ *
+ */
+@RestController
+public class CcbUnbindController extends UnbindController {
+	
+	private static final Logger logger = LoggerFactory
+			.getLogger(CcbUnbindController.class);
+	
+
+	@Autowired
+	private CcbUnbindHandle ccbUnbindHandle;
+	@Autowired
+	private HandleMessage handleMessage;
+	
+	@Autowired
+	private CcbUnbindRequestValidator validator;
+	
+	@InitBinder
+	public void initBinder(WebDataBinder binder) {
+		binder.setValidator(validator);
+	}
+	
+	@Override
+	protected BaseResponse handle(UnbindRequest request) {
+		logger.info("[module: CcbUnbindController][step:convert input to ccb bind request param][input:{}]",request);
+		CcbUnbindRequest ccbUnbindRequest = ccbUnbindHandle.convertToCcbRequest(request);
+		String url = environment.getProperty("ccb.pay.host")+environment.getProperty("ccb.pay.path");
+		logger.info("bind request url:{}",url);
+		String encryptMessage = handleMessage.generateEncryptMessage(ccbUnbindRequest, "model/unbind.vm");
+		logger.info("[module: CcbUnbindController][step:send message][message:{}]",encryptMessage);
+		String responseMessage = handleMessage.sendMessage(encryptMessage,url);
+		logger.info("[module: CcbUnbindController][step:convert response message to xml][response message:{}]",responseMessage);
+		String xml = handleMessage.getXml(responseMessage);
+		logger.info("[module: CcbUnbindController][step:convert response message to object][response message:{}]",xml);
+		return ccbUnbindHandle.convertXmltoObject(xml);
+	}
+}

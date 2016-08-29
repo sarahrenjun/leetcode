@@ -1,0 +1,91 @@
+/**
+ * *****************************************************
+ * Copyright (C) 2016 iQIYI.COM - All Rights Reserved
+ * This file is part of iQiyi Pay project.
+ * Unauthorized copy of this file, via any medium is strictly prohibited.
+ * Proprietary and Confidential.
+ * ****************************************************
+ **/
+package com.iqiyi.pay.channel.ccb.handle;
+
+import java.io.IOException;
+import java.util.Date;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.stereotype.Component;
+import org.xml.sax.SAXException;
+
+import com.iqiyi.pay.channel.ccb.constants.CcbResultCode;
+import com.iqiyi.pay.channel.ccb.constants.ConstantParam;
+import com.iqiyi.pay.channel.ccb.param.request.CcbUnbindRequest;
+import com.iqiyi.pay.channel.ccb.param.response.CcbUnbindResponse;
+import com.iqiyi.pay.channel.ccb.util.CcbUtil;
+import com.iqiyi.pay.channel.constants.ResultCode;
+import com.iqiyi.pay.channel.exception.PayException;
+import com.iqiyi.pay.channel.request.UnbindRequest;
+import com.iqiyi.pay.channel.response.UnbindResponse;
+import com.iqiyi.pay.channel.util.XmlObjectUtil;
+/**
+ * 
+ * @author renshuangjun_sx on 2016/08/04
+ *
+ */
+
+@Component
+public class CcbUnbindHandle {
+	private static final Logger logger = LoggerFactory
+			.getLogger(CcbBindHandle.class);
+	
+	@Autowired
+	private Environment environment;
+	@Autowired
+	private HandleMessage generateEncryptMessage;
+	
+	/**
+	 * convert input param to ccb unbind request param
+	 * @param param
+	 * @return
+	 */
+	public CcbUnbindRequest convertToCcbRequest(UnbindRequest param) {
+		CcbUnbindRequest ccbUnbindRequest = new CcbUnbindRequest();
+		ccbUnbindRequest.setAcct_no(param.getCard_num());
+		ccbUnbindRequest.setCunt_no(environment.getProperty("ccb.counter.number"));
+		ccbUnbindRequest.setShop_no(environment.getProperty("ccb.shop.number"));
+		ccbUnbindRequest.setTx_flag("1");
+		ccbUnbindRequest.setTxcode(ConstantParam.CCB_UNBIND_TXCODE);
+		ccbUnbindRequest.setTxdate(param.getTrans_time().substring(0, 8));
+		ccbUnbindRequest.setTxtime(param.getTrans_time().substring(8));
+		ccbUnbindRequest.setTxseq(CcbUtil.getSysTime());
+		return ccbUnbindRequest;
+	}
+	
+	
+	
+	/**
+	 * convert response xml to object
+	 * @param xml
+	 * @return
+	 */
+	public UnbindResponse convertXmltoObject(String xml) {
+		UnbindResponse response = new UnbindResponse();
+		try {
+			CcbUnbindResponse cubr = XmlObjectUtil.convertXmlToObjectDigester(xml, "UTF-8", "rules/UnbindResponseDigester.xml");
+			logger.info("[ccb unbind response object: {}]",cubr);
+			if("SUCCESS".equals(cubr.getStatus())) {
+				response.setCode(ResultCode.SUCCESS.getCode());
+				response.setMsg(ResultCode.SUCCESS.getMsg());
+			} else {
+				response.setCode(cubr.getCode());
+				response.setMsg(cubr.getDesc());
+			}
+			response.setTrans_seq(cubr.getTxseq());
+		} catch (IOException | SAXException e) {
+			logger.info("[convert response xml to object error:[message:{},cause:{}]]",e.getMessage(),e.getCause());
+			throw new PayException(CcbResultCode.ERROR_OF_CONVERT.getCode(),CcbResultCode.ERROR_OF_CONVERT.getMsg());
+		}
+		return response; 
+	}
+}

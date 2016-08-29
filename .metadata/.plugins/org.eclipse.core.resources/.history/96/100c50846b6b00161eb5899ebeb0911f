@@ -1,0 +1,125 @@
+/**
+ * *****************************************************
+ * Copyright (C) 2016 iQIYI.COM - All Rights Reserved
+ * This file is part of iQiyi Pay project.
+ * Unauthorized copy of this file, via any medium is strictly prohibited.
+ * Proprietary and Confidential.
+ * ****************************************************
+ **/
+package com.iqiyi.pay.channel.ccb.handle;
+
+import java.io.IOException;
+import java.util.Date;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.stereotype.Component;
+import org.xml.sax.SAXException;
+
+import com.iqiyi.pay.channel.ccb.constants.CcbResultCode;
+import com.iqiyi.pay.channel.ccb.constants.ConstantParam;
+import com.iqiyi.pay.channel.ccb.param.request.CcbQueryOrderRequest;
+import com.iqiyi.pay.channel.ccb.param.response.CcbDetailsResponse;
+import com.iqiyi.pay.channel.ccb.param.response.CcbQueryOrderResponse;
+import com.iqiyi.pay.channel.ccb.util.CcbUtil;
+import com.iqiyi.pay.channel.constants.ResultCode;
+import com.iqiyi.pay.channel.exception.PayException;
+import com.iqiyi.pay.channel.request.QueryOrderRequest;
+import com.iqiyi.pay.channel.response.QueryOrderResponse;
+import com.iqiyi.pay.channel.util.XmlObjectUtil;
+/**
+ * 
+ * @author renshuangjun_sx on 2016/08/04
+ *
+ */
+
+@Component
+public class CcbQueryOrderHandle {
+	
+	private static final Logger logger = LoggerFactory
+			.getLogger(CcbQueryOrderHandle.class);
+	
+	@Autowired
+	private Environment environment;
+	@Autowired
+	private HandleMessage generateEncryptMessage;
+	
+	/**
+	 * convert input param to ccb bind request param
+	 * @param param
+	 * @return
+	 */
+	public CcbQueryOrderRequest convertToCcbRequest(QueryOrderRequest param) {
+		CcbQueryOrderRequest ccbQueryOrderRequest = new CcbQueryOrderRequest();
+		ccbQueryOrderRequest.setShop_no(environment.getProperty("ccb.shop.number"));
+		ccbQueryOrderRequest.setFunc_cod("0");
+		ccbQueryOrderRequest.setOri_date(param.getOrig_trans_time().substring(0, 8));
+		ccbQueryOrderRequest.setOri_txseq(param.getOrig_trans_seq());
+		ccbQueryOrderRequest.setTxcode(ConstantParam.CCB_QUERY_TXCODE);
+		ccbQueryOrderRequest.setTxdate(param.getTrans_time().substring(0, 8));
+		ccbQueryOrderRequest.setTxtime(param.getTrans_time().substring(8));
+		ccbQueryOrderRequest.setTxseq(CcbUtil.getSysTime());
+		ccbQueryOrderRequest.setOrder_no(param.getOrig_order_code());
+		return ccbQueryOrderRequest;
+	}
+	
+	
+	
+	/**
+	 * convert response xml to object
+	 * @param xml
+	 * @return
+	 */
+	public QueryOrderResponse convertXmltoObject(String xml) {
+		QueryOrderResponse response = new QueryOrderResponse();
+		try {
+			CcbQueryOrderResponse cqor = XmlObjectUtil.convertXmlToObjectDigester(xml, "UTF-8", "rules/QueryOrderResponseDigester.xml");
+			List<CcbDetailsResponse> records = XmlObjectUtil.convertXmlToObjectDigester(xml, ConstantParam.UTF_ENCODE, "rules/QueryOrderRecordsDigester.xml");
+			cqor.setRecords(records);
+			logger.info("[ccb query order response object: {}]",cqor);
+			if("SUCCESS".equals(cqor.getStatus())) {
+				response.setCode(ResultCode.SUCCESS.getCode());
+				response.setMsg(ResultCode.SUCCESS.getMsg());
+				response.setOrig_order_code(cqor.getOrder_no());
+				
+				if(cqor.getRec_counts().equals("1")) {
+					CcbDetailsResponse detail = cqor.getRecords().get(0);
+					response.setOrig_fee(detail.getAmount());
+					response.setOrig_channel_trade_code(detail.getOri_txseq());
+					response.setOrig_channel_trade_time(detail.getBack_trad_date());
+					response.setOrig_trans_seq(detail.getOri_txseq());
+					if(detail.getTranstatus().equals("1")) {
+						response.setOrig_order_status("SUCCESS");
+					} else {
+						response.setOrig_order_status("FAIL");
+					}
+				} else {
+					String orderStatus = "FAIL";
+					for(CcbDetailsResponse detail : cqor.getRecords()) {
+						if(detail.getTranstatus().equals("1")) {
+							response.setOrig_fee(detail.getAmount());
+							response.setOrig_channel_trade_code(detail.getOri_txseq());
+							response.setOrig_channel_trade_time(detail.getBack_trad_date());
+							response.setOrig_trans_seq(detail.getOri_txseq());
+							orderStatus = "SUCCESS";
+						}
+					}
+					response.setOrig_order_status(orderStatus);
+				}
+				response.setTrans_seq(cqor.getTxseq());
+			} else {
+				response.setCode(cqor.getCode());
+				response.setMsg(cqor.getDesc());
+			}
+			
+			
+		} catch (IOException | SAXException e) {
+			logger.info("[convert response xml to object error:[message:{},cause:{}]]",e.getMessage(),e.getCause());
+			throw new PayException(CcbResultCode.ERROR_OF_CONVERT.getCode(),CcbResultCode.ERROR_OF_CONVERT.getMsg());
+		}
+		return response; 
+	}
+}
