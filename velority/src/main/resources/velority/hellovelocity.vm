@@ -1,7 +1,0 @@
-<?xml version="1.0"?>
-<salelist>
-   #if(${student.name})
-    <name>${student.name}</name>
-   #end
-    <age>${student.age}</age>
-</salelist>
