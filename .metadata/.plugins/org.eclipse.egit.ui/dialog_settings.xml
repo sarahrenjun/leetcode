@@ -2,6 +2,7 @@
 <section name="Workbench">
 	<item value="true" key="CommitDialog.showUntracked"/>
 	<list key="RepositorySelectionPage.UsedUris">
+		<item value="https://github.com/sarahrenjun/leetcode.git"/>
 		<item value="http://gitlab.qiyi.domain/renshuangjun_sx/pay-channel-ccb.git"/>
 		<item value="ssh://git@gitlab.qiyi.domain:10022/renshuangjun_sx/pay-channel-ccb.git"/>
 		<item value="http://gitlab.qiyi.domain/zhangzhe/pay-common-channel.git"/>
